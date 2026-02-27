@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Basic Accounting - Adjusting Entries</title>
+    
+    <!-- MathJax for any formulas -->
+    <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'],['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        /* NEW THEME: Corporate Accounting (Slate & Emerald) */
+        :root { 
+            --primary-color: #2C3E50; /* Dark Slate */
+            --accent-color: #27AE60; /* Emerald Green */
+            --text-color: #333333; 
+            --bg-color: #E8ECEF; 
+            --slide-bg: #FFFFFF; 
+            --light-accent: #EAFBF1; /* Very light green for highlights */
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-color); 
+            height: 100vh; 
+            height: 100dvh; 
+            overflow: hidden; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+
+        #presentation-container { 
+            width: 100%; 
+            height: 100%; 
+            max-width: 1920px; 
+            max-height: 1080px; 
+            background-color: var(--slide-bg); 
+            position: relative; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.2); 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        #top-ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 0; 
+            z-index: 300;
+        }
+
+        /* Slide Content */
+        .slide { 
+            display: none; 
+            flex: 1; 
+            padding: 3rem 4rem; 
+            animation: fadeIn 0.5s ease; 
+            overflow-y: auto; 
+            overflow-x: hidden;
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .slide.active { display: flex; }
+
+        /* Typography */
+        h1 { color: var(--primary-color); font-size: 3.5rem; margin-bottom: 1rem; }
+        h2 { color: var(--primary-color); font-size: 2.5rem; margin-bottom: 1.5rem; border-bottom: 3px solid var(--accent-color); padding-bottom: 0.5rem; display: inline-block; }
+        h3 { font-size: 1.8rem; color: #555; margin-top: 1rem; margin-bottom: 0.5rem; }
+        p, li { font-size: 1.4rem; line-height: 1.6; color: var(--text-color); margin-bottom: 0.8rem; }
+        ul, ol { margin-left: 2.5rem; margin-bottom: 1rem; }
+
+        /* Title Slide */
+        .title-slide { justify-content: center; align-items: center; text-align: center; background: linear-gradient(135deg, var(--primary-color) 0%, #1A252F 100%); color: white; }
+        .title-slide h1 { color: white; font-size: 4rem; }
+        .title-slide h2 { color: var(--accent-color); border: none; }
+        .title-slide p { color: #D5DDBF; font-size: 1.8rem; }
+
+        /* Interactives & Boxes */
+        .interactive-box { background-color: #F8F9FA; border-left: 5px solid var(--accent-color); padding: 1.5rem; margin: 1rem 0; border-radius: 0 5px 5px 0; }
+        .concept-box { background-color: var(--light-accent); border: 2px solid var(--accent-color); padding: 1.5rem; margin: 1rem 0; border-radius: 8px; text-align: center; }
+        
+        .btn-toggle { background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; font-size: 1.2rem; cursor: pointer; border-radius: 5px; margin-top: 10px; transition: background 0.3s; font-weight: bold; }
+        .btn-toggle:hover { background-color: var(--accent-color); }
+        .hidden-content { display: none; margin-top: 15px; padding: 15px; background-color: #FDFDFD; border-radius: 5px; border: 1px solid #CCC; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+
+        /* Accounting Tables */
+        table { width: 100%; border-collapse: collapse; font-size: 1.2rem; margin: 20px 0; background: white; }
+        th, td { border: 1px solid #BDC3C7; padding: 12px 15px; }
+        th { background-color: var(--primary-color); color: white; text-align: center; }
+        
+        /* Specific Journal Entry Styling */
+        .journal-table th { background-color: #34495E; }
+        .journal-table td:nth-child(1) { width: 15%; text-align: center; } /* Date */
+        .journal-table td:nth-child(2) { width: 45%; } /* Account Titles */
+        .journal-table td:nth-child(3), .journal-table td:nth-child(4) { width: 20%; text-align: right; font-family: monospace; font-size: 1.3rem; } /* Debit/Credit */
+        .indent { padding-left: 40px !important; }
+        .explanation { font-style: italic; color: #666; font-size: 1.1rem; padding-left: 20px !important; border-bottom: 2px solid #34495E;}
+
+        /* Controls */
+        .controls { position: absolute; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 100; }
+        .nav-btn { background: rgba(44, 62, 80, 0.7); color: white; border: none; padding: 10px 20px; font-size: 1.2rem; cursor: pointer; border-radius: 30px; transition: background 0.3s;}
+        .nav-btn:hover { background: var(--primary-color); }
+        .progress { position: absolute; bottom: 0; left: 0; height: 6px; background-color: var(--accent-color); transition: width 0.3s; z-index: 200; }
+        
+        /* Contact Grid */
+        .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 2rem; width: 80%; margin-left: auto; margin-right: auto;}
+        .contact-card { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); text-align: center; }
+        .contact-card strong { display: block; font-size: 1.4rem; color: var(--accent-color); margin-bottom: 5px; }
+        .contact-card span { font-size: 1.1rem; color: #ECF0F1; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Menu & Page Num */
+        #page-counter { 
+            position: absolute; 
+            bottom: 20px; 
+            left: 20px; 
+            background: rgba(255, 255, 255, 0.9); 
+            color: var(--primary-color); 
+            padding: 8px 15px; 
+            border-radius: 20px; 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+            pointer-events: auto;
+        }
+        #menu-btn { 
+            position: absolute; 
+            top: 20px; 
+            right: 20px; 
+            background: var(--primary-color); 
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            font-size: 1.2rem; 
+            cursor: pointer; 
+            border-radius: 5px; 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            transition: background 0.3s; 
+            pointer-events: auto;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        #menu-btn:hover { background: var(--accent-color); }
+        
+        #slide-menu { position: absolute; top: 0; left: 0; width: 320px; height: 100%; background: white; z-index: 400; box-shadow: 2px 0 15px rgba(0,0,0,0.3); transform: translateX(-100%); transition: transform 0.3s ease-in-out; display: flex; flex-direction: column; }
+        #slide-menu.open { transform: translateX(0); }
+        #slide-menu-header { padding: 20px; background: var(--primary-color); color: white; display: flex; justify-content: space-between; align-items: center; }
+        #close-menu-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        #slide-list { flex: 1; overflow-y: auto; padding: 10px 0; }
+        .menu-item { padding: 12px 20px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 1.1rem; color: #333; transition: background 0.2s; }
+        .menu-item:hover { background-color: var(--bg-color); color: var(--primary-color); }
+        .menu-item.active { background-color: var(--light-accent); border-left: 4px solid var(--accent-color); font-weight: bold; }
+        #menu-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 350; display: none; }
+        #menu-overlay.visible { display: block; }
+
+        .flex-row { display: flex; gap: 20px; flex-wrap: wrap; }
+        .flex-col { flex: 1; min-width: 300px; }
+
+        /* Responsive Design */
+        @media screen and (max-width: 1024px) {
+            body { height: 100dvh; background-color: var(--slide-bg); }
+            #presentation-container { max-width: 100%; max-height: 100%; height: 100dvh; box-shadow: none; }
+            h1 { font-size: 2.2rem; }
+            h2 { font-size: 1.8rem; }
+            .title-slide h1 { font-size: 2.8rem; }
+            p, li { font-size: 1.15rem; }
+
+            .slide { padding: 80px 1.5rem 80px 1.5rem; }
+            .title-slide { justify-content: flex-start; padding-top: 100px; }
+            .contact-grid { grid-template-columns: 1fr; width: 100%; }
+
+            #top-ui-layer { height: 60px; background: #ffffff; border-bottom: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; position: fixed; }
+            #page-counter { position: relative; top: auto; bottom: auto; left: auto; right: auto; background: none; box-shadow: none; font-size: 1rem; padding: 0 10px; margin: 0; }
+            #menu-btn { position: relative; top: auto; bottom: auto; right: auto; left: auto; padding: 6px 12px; font-size: 1rem; color: white;}
+
+            .controls { position: fixed; bottom: 0; left: 0; right: 0; width: 100%; background: #ffffff; border-top: 1px solid #ddd; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+            .nav-btn { background: var(--primary-color); color: white; padding: 12px 25px; font-size: 1rem; border-radius: 8px; flex: 1; margin: 0 5px; text-align: center;}
+
+            table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; font-size: 0.95rem; margin: 10px 0; }
+            th, td { padding: 8px 6px; }
+            
+            .journal-table td:nth-child(3), .journal-table td:nth-child(4) { font-size: 1rem; }
+            .interactive-box, .concept-box { padding: 1rem; width: 100%; }
+        }
+        
+        @media screen and (max-width: 400px) {
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; }
+            table { font-size: 0.85rem; } 
+        }
+    </style>
+</head>
+<body>
+<div id="presentation-container">
+    <div id="progress-bar" class="progress" style="width: 0%"></div>
+    
+    <!-- Top UI Layer -->
+    <div id="top-ui-layer">
+        <div id="page-counter">1 / 1</div>
+        <button id="menu-btn" onclick="toggleMenu()"><span>☰</span> Menu</button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <div id="menu-overlay" onclick="toggleMenu()"></div>
+    <div id="slide-menu">
+        <div id="slide-menu-header"><h3>Slide Navigation</h3><button id="close-menu-btn" onclick="toggleMenu()">✕</button></div>
+        <div id="slide-list"></div>
+    </div>
+
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active">
+        <h1>Lesson: Adjusting Entries</h1>
+        <h2>and the Adjusted Trial Balance</h2>
+        <p>Basic Accounting | Grade 11</p>
+        <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px;">
+            <p style="font-size: 1.2rem; color: #BDC3C7;">Strengthened Senior High School Curriculum</p>
+        </div>
+    </div>
+
+    <!-- Slide 2: Objectives -->
+    <div class="slide">
+        <h2>Learning Objectives</h2>
+        <p>At the end of this session, you should be able to:</p>
+        <div class="interactive-box">
+            <ol>
+                <li>Explain the purpose and need for adjusting entries.</li>
+                <li>Identify the major types of adjusting entries (Deferrals, Accruals, and Estimates).</li>
+                <li>Prepare adjusting journal entries for a business.</li>
+                <li>Post adjustments and prepare an <strong>Adjusted Trial Balance</strong>.</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Slide 3: The Need for Adjustments -->
+    <div class="slide">
+        <h2>Why Do We Need Adjusting Entries?</h2>
+        <p>You already know how to prepare an <strong>Unadjusted Trial Balance</strong>. It proves that Debits = Credits. But is it perfectly accurate for financial reporting?</p>
+        
+        <div class="flex-row" style="margin-top: 20px;">
+            <div class="flex-col concept-box">
+                <h3>Wait a minute...</h3>
+                <p>Have we recorded the supplies that were used up during the month?</p>
+                <p>What about the salaries employees earned in the last 3 days of the month, but haven't been paid yet?</p>
+            </div>
+            <div class="flex-col interactive-box">
+                <p>The unadjusted trial balance often contains account balances that are <strong>not entirely up-to-date</strong>. Adjusting entries ensure that the revenue and expense accounts reflect the true financial position of the business.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Core Accounting Principles -->
+    <div class="slide">
+        <h2>The "Why": Accrual Accounting</h2>
+        <p>Adjusting entries are required because of the <strong>Accrual Basis of Accounting</strong>. This is governed by two main principles:</p>
+
+        <div class="interactive-box" style="border-left-color: #3498DB;">
+            <h3 style="color: #2980B9;">1. Revenue Recognition Principle</h3>
+            <p>Revenues should be recognized (recorded) in the accounting period in which they are <em>earned</em>, regardless of when cash is received.</p>
+        </div>
+
+        <div class="interactive-box" style="border-left-color: #E74C3C;">
+            <h3 style="color: #C0392B;">2. Matching Principle (Expense Recognition)</h3>
+            <p>Expenses should be recognized in the same period as the revenues they helped to generate, regardless of when cash is paid.</p>
+        </div>
+    </div>
+
+    <!-- Slide 5: Categories -->
+    <div class="slide">
+        <h2>Categories of Adjusting Entries</h2>
+        <p>Adjusting entries generally fall into three broad categories:</p>
+
+        <table>
+            <tr>
+                <th style="width: 33%;">1. Deferrals (Prepayments)</th>
+                <th style="width: 33%;">2. Accruals</th>
+                <th style="width: 33%;">3. Estimates</th>
+            </tr>
+            <tr>
+                <td>Cash is paid or received <em>before</em> the expense or revenue is recognized.</td>
+                <td>Cash is paid or received <em>after</em> the expense or revenue is recognized.</td>
+                <td>Allocating the cost of an asset over its useful life, or anticipating losses.</td>
+            </tr>
+            <tr style="background-color: #F8F9FA;">
+                <td>
+                    <ul>
+                        <li>Prepaid Expenses (e.g., Prepaid Rent)</li>
+                        <li>Unearned Revenues</li>
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                        <li>Accrued Expenses (e.g., Salaries Payable)</li>
+                        <li>Accrued Revenues</li>
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                        <li>Depreciation of Equipment</li>
+                        <li>Allowance for Doubtful Accounts</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Slide 6: Example 1 - Deferrals -->
+    <div class="slide">
+        <h2>Example 1: Prepaid Expenses (Deferral)</h2>
+        <p><strong>Scenario:</strong> On Dec 1, a business paid ₱12,000 for a 12-month insurance policy. The unadjusted trial balance on Dec 31 shows <em>Prepaid Insurance</em> at ₱12,000.</p>
+        <p><strong>Adjustment needed:</strong> By Dec 31, one month of insurance has expired (been used up).</p>
+        <p>Calculation: ₱12,000 ÷ 12 months = <strong>₱1,000 used in December</strong>.</p>
+
+        <button class="btn-toggle" onclick="toggleSolution('sol-1')">Show Adjusting Entry</button>
+        
+        <div id="sol-1" class="hidden-content">
+            <table class="journal-table">
+                <tr><th>Date</th><th>Account Titles and Explanation</th><th>Debit (₱)</th><th>Credit (₱)</th></tr>
+                <tr>
+                    <td>Dec 31</td>
+                    <td>Insurance Expense</td>
+                    <td>1,000</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="indent">Prepaid Insurance</td>
+                    <td></td>
+                    <td>1,000</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="explanation">To record expired insurance for the month.</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+            <p><em>Effect:</em> Increases expenses (lowering net income) and decreases the asset (Prepaid Insurance now has a balance of ₱11,000).</p>
+        </div>
+    </div>
+
+    <!-- Slide 7: Example 2 - Accruals -->
+    <div class="slide">
+        <h2>Example 2: Accrued Expenses (Accrual)</h2>
+        <p><strong>Scenario:</strong> Employees are paid ₱10,000 every Friday for a 5-day workweek (M-F). December 31 falls on a Wednesday. The employees have worked 3 days (Mon-Wed) but will not be paid until Friday, Jan 2.</p>
+        <p><strong>Adjustment needed:</strong> The business owes employees for 3 days of work in December.</p>
+        <p>Calculation: (₱10,000 ÷ 5 days) × 3 days = <strong>₱6,000 accrued salary</strong>.</p>
+
+        <button class="btn-toggle" onclick="toggleSolution('sol-2')">Show Adjusting Entry</button>
+        
+        <div id="sol-2" class="hidden-content">
+            <table class="journal-table">
+                <tr><th>Date</th><th>Account Titles and Explanation</th><th>Debit (₱)</th><th>Credit (₱)</th></tr>
+                <tr>
+                    <td>Dec 31</td>
+                    <td>Salaries Expense</td>
+                    <td>6,000</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="indent">Salaries Payable</td>
+                    <td></td>
+                    <td>6,000</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="explanation">To record accrued salaries for Dec 29-31.</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+            <p><em>Effect:</em> Increases expenses for December to follow the matching principle, and recognizes a liability (Payable).</p>
+        </div>
+    </div>
+
+    <!-- Slide 8: Example 3 - Depreciation -->
+    <div class="slide">
+        <h2>Example 3: Depreciation (Estimate)</h2>
+        <p><strong>Scenario:</strong> The business owns equipment worth ₱60,000. It is estimated to depreciate by ₱1,000 every month.</p>
+        <p>Unlike supplies, we do not credit the Equipment account directly. Instead, we use a <em>contra-asset</em> account called <strong>Accumulated Depreciation</strong>.</p>
+
+        <button class="btn-toggle" onclick="toggleSolution('sol-3')">Show Adjusting Entry</button>
+        
+        <div id="sol-3" class="hidden-content">
+            <table class="journal-table">
+                <tr><th>Date</th><th>Account Titles and Explanation</th><th>Debit (₱)</th><th>Credit (₱)</th></tr>
+                <tr>
+                    <td>Dec 31</td>
+                    <td>Depreciation Expense - Equipment</td>
+                    <td>1,000</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="indent">Accumulated Depreciation - Equip.</td>
+                    <td></td>
+                    <td>1,000</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="explanation">To record monthly depreciation of equipment.</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+            <div class="concept-box" style="margin-top: 10px; padding: 10px;">
+                <strong>Book Value of Equipment</strong> = Equipment Cost (₱60,000) - Accumulated Depreciation (₱1,000) = <strong>₱59,000</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 9: Adjusted Trial Balance -->
+    <div class="slide">
+        <h2>The Adjusted Trial Balance</h2>
+        <p>Once all adjusting entries are journalized and posted to the General Ledger, the accountant prepares an <strong>Adjusted Trial Balance</strong>.</p>
+        
+        <div class="flex-row">
+            <div class="flex-col interactive-box">
+                <h3>Purpose</h3>
+                <ul>
+                    <li>To prove the equality of the total debit balances and total credit balances in the ledger <em>after</em> all adjustments.</li>
+                    <li>It is the primary basis for the preparation of the <strong>Financial Statements</strong> (Income Statement, Balance Sheet, etc.).</li>
+                </ul>
+            </div>
+            <div class="flex-col concept-box">
+                <h3>The Formula</h3>
+                <p style="font-size: 1.5rem; font-weight: bold; font-family: monospace;">
+                    Unadjusted Balance<br>
+                    +/- Adjustments<br>
+                    --------------------<br>
+                    = Adjusted Balance
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: Guided Practice -->
+    <div class="slide">
+        <h2>Knowledge Check: Try It Yourself!</h2>
+        <p><strong>Data:</strong> The Unadjusted Trial Balance shows <strong>Office Supplies</strong> with a debit balance of <strong>₱8,500</strong>. A physical count on December 31 reveals that only <strong>₱2,500</strong> of supplies remain on hand.</p>
+        
+        <div class="interactive-box">
+            <p><strong>Questions:</strong></p>
+            <ol>
+                <li>How much supplies were used?</li>
+                <li>What is the Adjusting Journal Entry?</li>
+                <li>What will be the balances of <em>Office Supplies</em> and <em>Supplies Expense</em> on the Adjusted Trial Balance?</li>
+            </ol>
+            
+            <button class="btn-toggle" onclick="toggleSolution('practice-sol')">Reveal Answers</button>
+            
+            <div id="practice-sol" class="hidden-content">
+                <p><strong>1. Supplies Used:</strong> ₱8,500 (Beginning) - ₱2,500 (Remaining) = <strong>₱6,000 Used</strong>.</p>
+                
+                <p><strong>2. Adjusting Entry:</strong></p>
+                <table class="journal-table" style="margin-top: 5px;">
+                    <tr><th>Date</th><th>Account Titles and Explanation</th><th>Debit (₱)</th><th>Credit (₱)</th></tr>
+                    <tr><td>Dec 31</td><td>Supplies Expense</td><td>6,000</td><td></td></tr>
+                    <tr><td></td><td class="indent">Office Supplies</td><td></td><td>6,000</td></tr>
+                </table>
+
+                <p style="margin-top: 15px;"><strong>3. Adjusted Trial Balance Balances:</strong></p>
+                <ul>
+                    <li><strong>Office Supplies:</strong> ₱8,500 Debit - ₱6,000 Credit = <strong>₱2,500 Debit</strong> (matches physical count!)</li>
+                    <li><strong>Supplies Expense:</strong> ₱0 + ₱6,000 Debit = <strong>₱6,000 Debit</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 11: Summary -->
+    <div class="slide">
+        <h2>Summary & Next Steps</h2>
+        <div class="interactive-box" style="border-left-color: var(--primary-color);">
+            <h3>Key Takeaways</h3>
+            <ul>
+                <li><strong>Adjusting Entries</strong> ensure the matching and revenue recognition principles are followed.</li>
+                <li>They always involve <strong>one Income Statement account</strong> (Revenue/Expense) and <strong>one Balance Sheet account</strong> (Asset/Liability).</li>
+                <li>They <em>never</em> involve the Cash account.</li>
+                <li>The <strong>Adjusted Trial Balance</strong> is the final checkpoint before creating Financial Statements.</li>
+            </ul>
+        </div>
+        <p><strong>Next Meeting:</strong> We will take a full Unadjusted Trial Balance worksheet, apply 5 different adjusting entries, and extract the Financial Statements.</p>
+    </div>
+
+    <!-- FINAL SLIDE -->
+    <div class="slide title-slide">
+        <h2>Questions?</h2>
+        <p>If you have any questions regarding adjustments or the accounting cycle, reach out to your instructor.</p>
+        
+        <div class="contact-grid">
+            <div class="contact-card">
+                <strong>Mr. Juan Dela Cruz, CPA</strong>
+                <span>Basic Accounting Instructor</span><br>
+                <span style="font-size: 0.9rem; color: #BDC3C7;">jdelacruz@school.edu.ph</span>
+            </div>
+            <div class="contact-card">
+                <strong>Ms. Maria Santos, CPA</strong>
+                <span>ABM Strand Coordinator</span><br>
+                <span style="font-size: 0.9rem; color: #BDC3C7;">msantos@school.edu.ph</span>
+            </div>
+        </div>
+        
+        <div style="margin-top: 40px;">
+            <p style="font-size: 1.2rem; color: #27AE60;">Accountancy, Business, and Management (ABM) Department</p>
+        </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="controls">
+        <button class="nav-btn" onclick="prevSlide()">&#10094; Prev</button>
+        <button class="nav-btn" onclick="nextSlide()">Next &#10095;</button>
+    </div>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const progressBar = document.getElementById('progress-bar');
+    const pageCounter = document.getElementById('page-counter');
+    const slideListContainer = document.getElementById('slide-list');
+    const totalSlides = slides.length;
+
+    function init() { 
+        generateSlideMenu(); 
+        showSlide(0); 
+    }
+    
+    function generateSlideMenu() {
+        slideListContainer.innerHTML = '';
+        slides.forEach((slide, index) => {
+            let title = `Slide ${index + 1}`;
+            const h1 = slide.querySelector('h1');
+            const h2 = slide.querySelector('h2');
+            if (h1) title = h1.innerText; else if (h2) title = h2.innerText;
+            const item = document.createElement('div');
+            item.className = 'menu-item';
+            item.innerHTML = `<strong>${index + 1}.</strong> ${title}`;
+            item.onclick = () => { showSlide(index); toggleMenu(); };
+            slideListContainer.appendChild(item);
+        });
+    }
+
+    function toggleMenu() {
+        const menu = document.getElementById('slide-menu');
+        const overlay = document.getElementById('menu-overlay');
+        if (menu.classList.contains('open')) { 
+            menu.classList.remove('open'); 
+            overlay.classList.remove('visible'); 
+        } else { 
+            menu.classList.add('open'); 
+            overlay.classList.add('visible'); 
+            updateMenuHighlight(); 
+        }
+    }
+
+    function updateMenuHighlight() {
+        const items = document.querySelectorAll('.menu-item');
+        items.forEach((item, index) => {
+            if (index === currentSlide) { 
+                item.classList.add('active'); 
+                item.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); 
+            } else { 
+                item.classList.remove('active'); 
+            }
+        });
+    }
+
+    function showSlide(index) {
+        if (index >= totalSlides) index = totalSlides - 1;
+        if (index < 0) index = 0;
+        
+        slides.forEach((slide, i) => { 
+            slide.classList.remove('active'); 
+            if (i === index) slide.classList.add('active'); 
+        });
+        
+        currentSlide = index;
+        progressBar.style.width = ((currentSlide + 1) / totalSlides) * 100 + '%';
+        pageCounter.innerText = `${currentSlide + 1} / ${totalSlides}`;
+        
+        // Scroll to top of slide
+        if (slides[currentSlide]) slides[currentSlide].scrollTop = 0;
+    }
+
+    function nextSlide() { showSlide(currentSlide + 1); }
+    function prevSlide() { showSlide(currentSlide - 1); }
+
+    function toggleSolution(id) {
+        const el = document.getElementById(id);
+        if (el.style.display === "block") {
+            el.style.display = "none";
+        } else {
+            el.style.display = "block";
+        }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "ArrowRight") nextSlide();
+        else if (event.key === "ArrowLeft") prevSlide();
+    });
+    
+    // Initialize presentation
+    init();
+</script>
+</body>
+</html>
